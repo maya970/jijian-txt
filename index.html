@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>极简TXT</title>
+<style>
+  :root {
+    --green: #2f4a3a;
+    --accent: #3d6b52;
+    --paper: #fffbf5;
+    --bg: #f6f3ec;
+    --text: #1e1e1e;
+    --muted: #6b7280;
+    --line: #e5e1d8;
+    --cream: #f0ebe3;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(ellipse 70% 55% at 50% 42%, #3e5c49 0%, #1c2b23 48%, #101612 100%);
+    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: var(--text);
+  }
+  .phone {
+    position: relative;
+    height: min(860px, calc(100vh - 28px));
+    aspect-ratio: 390 / 844;
+    max-width: calc(100vw - 24px);
+    border-radius: 54px;
+    padding: 11px;
+    background:
+      linear-gradient(160deg, #5c5c60 0%, #2a2a2c 18%, #161617 55%, #0c0c0d 100%);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.18),
+      0 28px 70px rgba(0,0,0,.5),
+      inset 0 1px 0 rgba(255,255,255,.25);
+  }
+  .phone::before,
+  .phone::after {
+    content: "";
+    position: absolute;
+    left: -3px;
+    width: 3px;
+    border-radius: 3px 0 0 3px;
+    background: linear-gradient(#3a3a3c, #1a1a1c);
+  }
+  .phone::before { top: 118px; height: 28px; box-shadow: 0 46px 0 #2a2a2c, 0 84px 0 #2a2a2c; }
+  .phone::after {
+    left: auto;
+    right: -3px;
+    top: 168px;
+    height: 74px;
+    border-radius: 0 3px 3px 0;
+  }
+  .screen {
+    position: relative;
+    height: 100%;
+    border-radius: 44px;
+    overflow: hidden;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+  }
+  .status {
+    height: 44px;
+    flex: none;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 22px 6px;
+    background: var(--green);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 650;
+    letter-spacing: .2px;
+  }
+  .island {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 96px;
+    height: 22px;
+    background: #0b0b0c;
+    border-radius: 20px;
+    z-index: 3;
+  }
+  .sig { opacity: .9; font-size: 11px; letter-spacing: .4px; }
+  .view {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+  }
+  .hidden { display: none !important; }
+  .hero {
+    background: var(--green);
+    color: #fff;
+    padding: 8px 18px 16px;
+  }
+  .hero h1 { margin: 0; font-size: 22px; font-weight: 700; }
+  .hero p { margin: 4px 0 0; font-size: 12px; color: rgba(255,255,255,.8); }
+  .actions {
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+  }
+  button, .file-btn {
+    font: inherit;
+    border: 0;
+    cursor: pointer;
+  }
+  .primary, .ghost {
+    height: 42px;
+    border-radius: 8px;
+    font-size: 15px;
+  }
+  .primary { flex: 1; background: var(--accent); color: #fff; }
+  .ghost { padding: 0 14px; background: #e8e4da; color: var(--text); }
+  .primary:active, .ghost:active, .icon:active, .save:active { transform: translateY(1px); }
+  .section-label {
+    margin: 0;
+    padding: 0 16px 6px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .list {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    margin: 0;
+    padding: 0 8px 8px;
+    list-style: none;
+  }
+  .list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .list button.doc {
+    flex: 1;
+    text-align: left;
+    background: transparent;
+    padding: 12px 8px;
+    color: var(--text);
+  }
+  .list .name { display: block; font-size: 15px; }
+  .list .meta { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+  .list .x {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 18px;
+  }
+  .empty {
+    flex: 1;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    color: var(--muted);
+    padding: 24px;
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  .foot {
+    flex: none;
+    text-align: center;
+    padding: 10px 12px 22px;
+    font-size: 12px;
+  }
+  .foot a { color: var(--accent); text-decoration: none; }
+  .topbar {
+    height: 48px;
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0 6px 0 2px;
+    background: var(--green);
+    color: #fff;
+  }
+  .icon {
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    color: #fff;
+    font-size: 18px;
+  }
+  .title {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    border-bottom: 1px solid transparent;
+  }
+  .title:focus { outline: none; background: rgba(255,255,255,.08); border-radius: 6px; }
+  .fontbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--cream);
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .fontbar .icon {
+    width: 36px;
+    height: 32px;
+    border-radius: 8px;
+    background: #fff;
+    color: var(--green);
+    font-size: 13px;
+    font-weight: 700;
+  }
+  #font-range {
+    flex: 1;
+    accent-color: var(--accent);
+    min-width: 0;
+  }
+  #font-value {
+    width: 24px;
+    text-align: center;
+    color: var(--green);
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .subbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: #f7f3ec;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .save {
+    margin-left: auto;
+    height: 32px;
+    padding: 0 14px;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 14px;
+  }
+  textarea {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    border: 0;
+    resize: none;
+    padding: 16px 16px 28px;
+    background: var(--paper);
+    color: var(--text);
+    line-height: 1.55;
+    font-family: inherit;
+    outline: none;
+  }
+  textarea::placeholder { color: #9aa09a; }
+  .toast {
+    position: absolute;
+    left: 50%;
+    bottom: 48px;
+    transform: translateX(-50%);
+    max-width: 80%;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(20, 28, 24, .88);
+    color: #fff;
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s;
+    z-index: 5;
+  }
+  .toast.show { opacity: 1; }
+  .mask {
+    position: absolute;
+    inset: 0;
+    background: rgba(16, 22, 18, .45);
+    display: grid;
+    place-items: center;
+    z-index: 6;
+    padding: 24px;
+  }
+  .dialog {
+    width: 100%;
+    background: #fff;
+    border-radius: 16px;
+    padding: 18px 16px 14px;
+    box-shadow: 0 16px 40px rgba(0,0,0,.2);
+  }
+  .dialog h2 { margin: 0 0 8px; font-size: 16px; }
+  .dialog p { margin: 0 0 14px; color: var(--muted); font-size: 14px; line-height: 1.5; }
+  .dialog .row { display: flex; gap: 8px; }
+  .dialog .row button { flex: 1; height: 38px; border-radius: 8px; }
+  .homebar {
+    position: absolute;
+    left: 50%;
+    bottom: 8px;
+    transform: translateX(-50%);
+    width: 112px;
+    height: 4px;
+    border-radius: 4px;
+    background: rgba(0,0,0,.28);
+    z-index: 4;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+  <section class="phone" aria-label="手机中的极简TXT">
+    <div class="screen">
+      <div class="island"></div>
+      <div class="status">
+        <span id="clock">22:13</span>
+        <span class="sig">5G ▮▮▮</span>
+      </div>
+
+      <div id="view-home" class="view">
+        <header class="hero">
+          <h1>极简TXT</h1>
+          <p>新建、打开、编辑，字号随时调</p>
+        </header>
+        <div class="actions">
+          <button class="primary" id="btn-open" type="button">打开</button>
+          <button class="primary" id="btn-new" type="button">新建</button>
+          <button class="ghost" id="btn-clear" type="button">清空</button>
+        </div>
+        <p class="section-label">最近文件（点右侧可删除）</p>
+        <p class="empty" id="empty">还没有文件<br>新建一篇，或打开本地 TXT</p>
+        <ul class="list hidden" id="list"></ul>
+        <div class="foot"><a href="https://github.com/maya970" target="_blank" rel="noreferrer">https://github.com/maya970</a></div>
+      </div>
+
+      <div id="view-editor" class="view hidden">
+        <div class="topbar">
+          <button class="icon" id="btn-back" type="button" aria-label="返回">←</button>
+          <input class="title" id="doc-name" aria-label="文件名" value="未命名.txt">
+        </div>
+        <div class="fontbar">
+          <span>字号</span>
+          <button class="icon" id="font-down" type="button" aria-label="缩小字号">A−</button>
+          <input id="font-range" type="range" min="12" max="36" value="17" aria-label="字体大小">
+          <strong id="font-value">17</strong>
+          <button class="icon" id="font-up" type="button" aria-label="放大字号">A+</button>
+        </div>
+        <div class="subbar">
+          <span id="status-line">编码：UTF-8</span>
+          <button class="save" id="btn-save" type="button">保存</button>
+        </div>
+        <textarea id="editor" placeholder="在这里输入或修改文字" spellcheck="false"></textarea>
+      </div>
+
+      <div class="toast" id="toast"></div>
+      <div class="mask hidden" id="mask">
+        <div class="dialog" role="dialog" aria-modal="true">
+          <h2 id="dlg-title">未保存的修改</h2>
+          <p id="dlg-text">离开前要保存这些修改吗？</p>
+          <div class="row">
+            <button class="ghost" id="dlg-discard" type="button">不保存</button>
+            <button class="primary" id="dlg-save" type="button">保存</button>
+          </div>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div>
+  </section>
+  <input id="file-input" type="file" accept=".txt,text/plain" hidden>
+<script>
+(function () {
+  var STORAGE = "jijian-txt-docs-v1";
+  var FONT_KEY = "jijian-txt-font";
+  var docs = loadDocs();
+  var fontSize = clampFont(Number(localStorage.getItem(FONT_KEY)) || 17);
+  var current = null;
+  var fileHandle = null;
+  var leaveAfterSave = false;
+
+  var home = document.getElementById("view-home");
+  var editorView = document.getElementById("view-editor");
+  var list = document.getElementById("list");
+  var empty = document.getElementById("empty");
+  var editor = document.getElementById("editor");
+  var nameInput = document.getElementById("doc-name");
+  var statusLine = document.getElementById("status-line");
+  var fontRange = document.getElementById("font-range");
+  var fontValue = document.getElementById("font-value");
+  var toast = document.getElementById("toast");
+  var mask = document.getElementById("mask");
+  var clock = document.getElementById("clock");
+
+  function loadDocs() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(STORAGE) || "[]");
+      return Array.isArray(raw) ? raw : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function persistDocs() {
+    localStorage.setItem(STORAGE, JSON.stringify(docs.slice(0, 20)));
+  }
+
+  function clampFont(n) {
+    n = Math.round(n);
+    if (n < 12) return 12;
+    if (n > 36) return 36;
+    return n;
+  }
+
+  function applyFont(n) {
+    fontSize = clampFont(n);
+    editor.style.fontSize = fontSize + "px";
+    fontRange.value = String(fontSize);
+    fontValue.textContent = String(fontSize);
+    localStorage.setItem(FONT_KEY, String(fontSize));
+  }
+
+  function showToast(text) {
+    toast.textContent = text;
+    toast.classList.add("show");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(function () { toast.classList.remove("show"); }, 1600);
+  }
+
+  function tick() {
+    var d = new Date();
+    clock.textContent = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  }
+
+  function renderHome() {
+    home.classList.remove("hidden");
+    editorView.classList.add("hidden");
+    list.innerHTML = "";
+    if (!docs.length) {
+      empty.classList.remove("hidden");
+      list.classList.add("hidden");
+      return;
+    }
+    empty.classList.add("hidden");
+    list.classList.remove("hidden");
+    docs.forEach(function (doc) {
+      var li = document.createElement("li");
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "doc";
+      var when = new Date(doc.time);
+      var stamp = when.getFullYear() + "-" + String(when.getMonth() + 1).padStart(2, "0") + "-" +
+        String(when.getDate()).padStart(2, "0") + " " +
+        String(when.getHours()).padStart(2, "0") + ":" + String(when.getMinutes()).padStart(2, "0");
+      btn.innerHTML = '<span class="name"></span><span class="meta"></span>';
+      btn.querySelector(".name").textContent = doc.name;
+      btn.querySelector(".meta").textContent = stamp;
+      btn.addEventListener("click", function () { openDoc(doc, null); });
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "x";
+      del.textContent = "×";
+      del.setAttribute("aria-label", "删除 " + doc.name);
+      del.addEventListener("click", function () {
+        docs = docs.filter(function (item) { return item.id !== doc.id; });
+        persistDocs();
+        renderHome();
+      });
+      li.appendChild(btn);
+      li.appendChild(del);
+      list.appendChild(li);
+    });
+  }
+
+  function refreshStatus() {
+    statusLine.textContent = "编码：" + (current.charset || "UTF-8") + (current.dirty ? " · 未保存" : "");
+  }
+
+  function openDoc(doc, handle) {
+    current = {
+      id: doc.id,
+      name: doc.name,
+      charset: doc.charset || "UTF-8",
+      dirty: false
+    };
+    fileHandle = handle || null;
+    nameInput.value = doc.name;
+    editor.value = doc.text || "";
+    refreshStatus();
+    applyFont(fontSize);
+    home.classList.add("hidden");
+    editorView.classList.remove("hidden");
+    editor.focus();
+  }
+
+  function rememberCurrent() {
+    var text = editor.value;
+    var name = (nameInput.value || "未命名.txt").trim() || "未命名.txt";
+    if (!/\.txt$/i.test(name)) name += ".txt";
+    nameInput.value = name;
+    current.name = name;
+    var next = {
+      id: current.id,
+      name: name,
+      text: text,
+      charset: current.charset || "UTF-8",
+      time: Date.now()
+    };
+    docs = [next].concat(docs.filter(function (item) { return item.id !== current.id; })).slice(0, 20);
+    persistDocs();
+    current.dirty = false;
+    refreshStatus();
+  }
+
+  function createNew() {
+    openDoc({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      name: "未命名.txt",
+      text: "",
+      charset: "UTF-8",
+      time: Date.now()
+    }, null);
+  }
+
+  async function decodeFile(file) {
+    var buf = await file.arrayBuffer();
+    var bytes = new Uint8Array(buf);
+    if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+      return { text: new TextDecoder("utf-8").decode(bytes.subarray(3)), charset: "UTF-8" };
+    }
+    try {
+      return { text: new TextDecoder("utf-8", { fatal: true }).decode(bytes), charset: "UTF-8" };
+    } catch (e) {
+      return { text: new TextDecoder("gbk").decode(bytes), charset: "GBK" };
+    }
+  }
+
+  async function openFromDisk() {
+    if (window.showOpenFilePicker) {
+      try {
+        var handles = await window.showOpenFilePicker({
+          types: [{ description: "文本", accept: { "text/plain": [".txt"] } }],
+          multiple: false
+        });
+        var handle = handles[0];
+        var file = await handle.getFile();
+        var decoded = await decodeFile(file);
+        openDoc({
+          id: "disk-" + file.name + "-" + file.lastModified,
+          name: file.name,
+          text: decoded.text,
+          charset: decoded.charset,
+          time: Date.now()
+        }, handle);
+        return;
+      } catch (e) {
+        if (e && e.name === "AbortError") return;
+      }
+    }
+    document.getElementById("file-input").click();
+  }
+
+  async function writeHandle(handle, text) {
+    var writable = await handle.createWritable();
+    await writable.write(new Blob([text], { type: "text/plain;charset=utf-8" }));
+    await writable.close();
+  }
+
+  function downloadText(name, text) {
+    var blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function save(thenLeave) {
+    if (!current) return;
+    var text = editor.value;
+    var name = (nameInput.value || "未命名.txt").trim() || "未命名.txt";
+    if (!/\.txt$/i.test(name)) name += ".txt";
+    nameInput.value = name;
+    try {
+      if (fileHandle && fileHandle.createWritable) {
+        await writeHandle(fileHandle, text);
+      } else if (window.showSaveFilePicker) {
+        fileHandle = await window.showSaveFilePicker({
+          suggestedName: name,
+          types: [{ description: "文本", accept: { "text/plain": [".txt"] } }]
+        });
+        await writeHandle(fileHandle, text);
+        if (fileHandle.name) nameInput.value = fileHandle.name;
+      } else {
+        downloadText(name, text);
+      }
+      rememberCurrent();
+      showToast("已保存");
+      if (thenLeave) {
+        leaveAfterSave = false;
+        current = null;
+        fileHandle = null;
+        renderHome();
+      }
+    } catch (e) {
+      if (e && e.name === "AbortError") return;
+      downloadText(name, text);
+      rememberCurrent();
+      showToast("已下载到本地");
+      if (thenLeave) {
+        leaveAfterSave = false;
+        current = null;
+        fileHandle = null;
+        renderHome();
+      }
+    }
+  }
+
+  function askLeave() {
+    if (!current || !current.dirty) {
+      current = null;
+      fileHandle = null;
+      renderHome();
+      return;
+    }
+    leaveAfterSave = true;
+    mask.classList.remove("hidden");
+  }
+
+  document.getElementById("btn-new").addEventListener("click", createNew);
+  document.getElementById("btn-open").addEventListener("click", openFromDisk);
+  document.getElementById("btn-clear").addEventListener("click", function () {
+    docs = [];
+    persistDocs();
+    renderHome();
+    showToast("已清空最近记录");
+  });
+  document.getElementById("btn-back").addEventListener("click", askLeave);
+  document.getElementById("btn-save").addEventListener("click", function () { save(false); });
+  document.getElementById("dlg-discard").addEventListener("click", function () {
+    mask.classList.add("hidden");
+    leaveAfterSave = false;
+    current = null;
+    fileHandle = null;
+    renderHome();
+  });
+  document.getElementById("dlg-save").addEventListener("click", function () {
+    mask.classList.add("hidden");
+    save(true);
+  });
+  nameInput.addEventListener("input", function () {
+    if (!current) return;
+    current.dirty = true;
+    refreshStatus();
+  });
+  editor.addEventListener("input", function () {
+    if (!current || current.dirty) return;
+    current.dirty = true;
+    refreshStatus();
+  });
+  fontRange.addEventListener("input", function () { applyFont(fontRange.value); });
+  document.getElementById("font-down").addEventListener("click", function () { applyFont(fontSize - 1); });
+  document.getElementById("font-up").addEventListener("click", function () { applyFont(fontSize + 1); });
+  document.getElementById("file-input").addEventListener("change", async function (event) {
+    var file = event.target.files && event.target.files[0];
+    event.target.value = "";
+    if (!file) return;
+    var decoded = await decodeFile(file);
+    openDoc({
+      id: "local-" + file.name + "-" + file.lastModified,
+      name: file.name,
+      text: decoded.text,
+      charset: decoded.charset,
+      time: Date.now()
+    }, null);
+  });
+
+  document.querySelector(".screen").addEventListener("dragover", function (event) {
+    event.preventDefault();
+  });
+  document.querySelector(".screen").addEventListener("drop", async function (event) {
+    event.preventDefault();
+    var file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
+    if (!file) return;
+    var decoded = await decodeFile(file);
+    openDoc({
+      id: "drop-" + file.name + "-" + file.lastModified,
+      name: file.name,
+      text: decoded.text,
+      charset: decoded.charset,
+      time: Date.now()
+    }, null);
+  });
+
+  tick();
+  setInterval(tick, 10000);
+  applyFont(fontSize);
+  renderHome();
+})();
+</script>
+</body>
+</html>
